@@ -1,56 +1,56 @@
 %cd C:\\Users\\Fatima\\Documents\\Fatima\\Michener\\Digital Health and Data Analytics\\Data Analytics II;
 
-import pandas as pd;
-from datetime import datetime as dt;
-import numpy as np;
-import matplotlib.pyplot as plt;
-import seaborn as sns;
+import pandas as pd
+from datetime import datetime as dt
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-import statsmodels.api as sm;
+import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression;
 
 # Packages for survival analysis
-from lifelines.statistics import multivariate_logrank_test;
-from lifelines import KaplanMeierFitter, CoxPHFitter;
+from lifelines.statistics import multivariate_logrank_test
+from lifelines import KaplanMeierFitter, CoxPHFitter
 
-xtrfxcovbs = pd.read_sas("xtrfxcovbs_withbmd.sas7bdat", format = 'sas7bdat');
+xtrfxcovbs = pd.read_sas("xtrfxcovbs_withbmd.sas7bdat", format = 'sas7bdat')
 
-xtrfxcovbs.columns = xtrfxcovbs.columns.str.lower();
+xtrfxcovbs.columns = xtrfxcovbs.columns.str.lower()
 
-xtrfxcovbs.columns;
+xtrfxcovbs.columns
 
-pd.set_option('display.max_columns', None);
+pd.set_option('display.max_columns', None)
 xtrfxcovbs;
 
-#PART 1 – Understand the characteristics of the CT bone measures (5 Marks)¶
-Determine the mean and standard deviation of t_CtPo_EC and t_TbSp.#
+#PART 1 – Understand the characteristics of the CT bone measures (5 Marks)
+Determine the mean and standard deviation of t_CtPo_EC and t_TbSp.
 
-print("Mean of t_ctpo_ec =", np.mean(xtrfxcovbs['t_ctpo_ec']));
+print("Mean of t_ctpo_ec =", np.mean(xtrfxcovbs['t_ctpo_ec']))
 
-print("Standard deviation of t_ctpo_ec = ", np.std(xtrfxcovbs['t_ctpo_ec']));
-print("Mean of t_tbsp =", np.mean(xtrfxcovbs['t_tbsp']));
-print("Standard deviation of t_tbsp = ", np.std(xtrfxcovbs['t_tbsp']));
+print("Standard deviation of t_ctpo_ec = ", np.std(xtrfxcovbs['t_ctpo_ec']))
+print("Mean of t_tbsp =", np.mean(xtrfxcovbs['t_tbsp']))
+print("Standard deviation of t_tbsp = ", np.std(xtrfxcovbs['t_tbsp']))
 
-#2. Run a univariable linear regression between t_CtPo_EC and t_TbSp¶
-a. Report the regression coefficient, 95% CI, and R2#
+#2. Run a univariable linear regression between t_CtPo_EC and t_TbSp
+a. Report the regression coefficient, 95% CI, and R2
 
-xtrfxcovbs1 = xtrfxcovbs[["id", "t_ctpo_ec","t_tbsp", "newosteofx", "t_ttop"]].dropna();
-pd.set_option('display.max_rows', None);
+xtrfxcovbs1 = xtrfxcovbs[["id", "t_ctpo_ec","t_tbsp", "newosteofx", "t_ttop"]].dropna()
+pd.set_option('display.max_rows', None)
 xtrfxcovbs1;
 
-np.isnan(xtrfxcovbs1).value_counts();
-x = xtrfxcovbs1[["t_ctpo_ec"]];
-y = xtrfxcovbs1["t_tbsp"];
-x1 = sm.add_constant(x);
+np.isnan(xtrfxcovbs1).value_counts()
+x = xtrfxcovbs1[["t_ctpo_ec"]]
+y = xtrfxcovbs1["t_tbsp"]
+x1 = sm.add_constant(x)
 x1;
 
-model = sm.OLS(y, x1);
-results = model.fit();
-print(results.summary());
+model = sm.OLS(y, x1)
+results = model.fit()
+print(results.summary())
 
-#3. Let’s turn t_CtPo_EC and t_TbSp into binomial / dichotomous variables to indicate if they are above or below 2 standard deviations above the mean:#
+#3. Let’s turn t_CtPo_EC and t_TbSp into binomial / dichotomous variables to indicate if they are above or below 2 standard deviations above the mean:
 
-# a)If t_CtPo_EC >= mean of  t_CtPo_EC + 2* standard deviation of t_CtPo_EC then t_CtPo_bi = 1; Else t_CtPo_bi = 0 #
+# a)If t_CtPo_EC >= mean of  t_CtPo_EC + 2* standard deviation of t_CtPo_EC then t_CtPo_bi = 1; Else t_CtPo_bi = 0 
 
 xtrfxcovbs1.loc[xtrfxcovbs1['t_ctpo_ec'] >= (np.mean(xtrfxcovbs1['t_ctpo_ec']) + (2* np.std(xtrfxcovbs1['t_ctpo_ec']))), 
                 't_ctpo_bi'] = 1
@@ -65,17 +65,17 @@ xtrfxcovbs1.loc[xtrfxcovbs1['t_tbsp'] < (np.mean(xtrfxcovbs1['t_tbsp']) + (2* np
                 't_tbsp_bi'] = 0
 
 #1. How does a larger cortical porosity (t_CtPo_bi) and a larger trabecular separation (t_TbSp_bi) relate to having new osteoporotic fractures (newosteofx) in the future?
-a. Run a Kaplan-Meier analysis examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+a. Run a Kaplan-Meier analysis examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)
 
-xtrfxcovbs1['status'] = xtrfxcovbs1['newosteofx'];
-kmpvfx = xtrfxcovbs1[["t_ctpo_bi", "t_ttop","status"]].dropna();
-np.isnan(kmpvfx).value_counts();
-xtrfxcovbs1['t_ttop'];
-kmf = KaplanMeierFitter();
-t = kmpvfx["t_ttop"];
-y = kmpvfx["status"];
-kmf.fit(t, event_observed=y);
-kmf.plot();
+xtrfxcovbs1['status'] = xtrfxcovbs1['newosteofx']
+kmpvfx = xtrfxcovbs1[["t_ctpo_bi", "t_ttop","status"]].dropna()
+np.isnan(kmpvfx).value_counts()
+xtrfxcovbs1['t_ttop']
+kmf = KaplanMeierFitter()
+t = kmpvfx["t_ttop"]
+y = kmpvfx["status"]
+kmf.fit(t, event_observed=y)
+kmf.plot()
 
 groups = kmpvfx["t_ctpo_bi"]
 ix = (groups == 0)
@@ -115,13 +115,13 @@ print(kmf_smcorpo.predict(times= [6, 12, 18]))
 
 add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
 plt.tight_layout()
-#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened
 
-# Log-rank test for curve comparison: #
+# Log-rank test for curve comparison: 
 ctpo_logrank = multivariate_logrank_test(kmpvfx['t_ttop'], kmpvfx['t_ctpo_bi'], kmpvfx['status'])
 ctpo_logrank.print_summary();
 
-#b. Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+#b. Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)
 kmpvfx1 = xtrfxcovbs1[["t_tbsp_bi", "t_ttop","status"]].dropna();
 np.isnan(kmpvfx1).value_counts();
 kmf = KaplanMeierFitter()
@@ -152,17 +152,17 @@ add_at_risk_counts(kmf_lgtbsp, kmf_smtbsp, ax=ax)
 plt.tight_layout()
 #kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
 
-# Log-rank test for curve comparison: #
+# Log-rank test for curve comparison: 
 tbsp_logrank = multivariate_logrank_test(kmpvfx1['t_ttop'], kmpvfx1['t_tbsp_bi'], kmpvfx1['status'])
-tbsp_logrank.print_summary();
+tbsp_logrank.print_summary()
 
 xtrfx = xtrfxcovbs1.copy()
 xtrfx;
 
-xtrfxt1 = xtrfx[(xtrfx['t_ctpo_bi'] == 1)];
-np.mean(xtrfxt1['t_ttop']);
-xtrfxt0 = xtrfx[(xtrfx['t_ctpo_bi'] == 0)];
-np.mean(xtrfxt0['t_ttop']);
+xtrfxt1 = xtrfx[(xtrfx['t_ctpo_bi'] == 1)]
+np.mean(xtrfxt1['t_ttop'])
+xtrfxt0 = xtrfx[(xtrfx['t_ctpo_bi'] == 0)]
+np.mean(xtrfxt0['t_ttop'])
 
 #3. Repeat #1 above but restricting the results to 36 months. Answer the same questions (i-iii) in parts a and b of #1.
 Part a
@@ -201,14 +201,14 @@ ax = kmf_smcorpo.plot_survival_function(ax=ax, ci_show=True) # on the same axes
 add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
 plt.tight_layout()
 
-#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened
 
-# ii.	Report p-value from log-ranks test – is this significant? What does that mean? #
+# ii.	Report p-value from log-ranks test – is this significant? What does that mean? 
 # Log-rank test for curve comparison: 
 ctpo_logrank = multivariate_logrank_test(xtrfxtop['t_ttop'], xtrfxtop['t_ctpo_bi'], xtrfxtop['status'])
-ctpo_logrank.print_summary();
+ctpo_logrank.print_summary()
 
-#Part b - #b.	Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+#Part b - #b.	Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)
 kmf = KaplanMeierFitter()
 t = xtrfxtop["t_ttop"]
 y = xtrfxtop["status"]
@@ -225,7 +225,7 @@ print(kmf_lgtbsp.predict(times= [6, 12, 18]))
 
 kmf.fit(t[ix], y[ix], label='Smaller Trabecular Separation')
 ax = kmf.plot_survival_function(ax=ax) # on the same axes
-print(kmf_smtbsp.predict(times= [6, 12, 18]));
+print(kmf_smtbsp.predict(times= [6, 12, 18]))
 
 from lifelines.plotting import add_at_risk_counts
 
@@ -240,19 +240,19 @@ ax = kmf_smtbsp.plot_survival_function(ax=ax, ci_show=True) # on the same axes
 add_at_risk_counts(kmf_lgtbsp, kmf_smtbsp, ax=ax)
 plt.tight_layout()
 
-#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened
 
 # ii.	Report p-value from log-ranks test – is this significant? What does that mean? 
 # Log-rank test for curve comparison: 
 tbsp_logrank = multivariate_logrank_test(xtrfxtop['t_ttop'], xtrfxtop['t_tbsp_bi'], xtrfxtop['status'])
-tbsp_logrank.print_summary();
+tbsp_logrank.print_summary()
 
 #PART 2A – Cox Proportional Hazards (PH) Models
-xtrfxcox1 = xtrfxcovbs.copy();
+xtrfxcox1 = xtrfxcovbs.copy()
 varstokeep = ["id", "newosteofx", "age", "height", "weight", "osteomed", "t_moart", "tothip_16"]
-xtrfxcox1[varstokeep];
+xtrfxcox1[varstokeep]
 
-xtrfxcox_all = xtrfxcox1.merge(xtrfx[['id','t_ctpo_bi','t_tbsp_bi']],on='id');
+xtrfxcox_all = xtrfxcox1.merge(xtrfx[['id','t_ctpo_bi','t_tbsp_bi']],on='id')
 xtrfxcox_total = xtrfxcox_all.merge(xtrfxcovbs[['id', 't_ttop']], on='id')
 xtrfxcox_total
 xtrfxcov1 = xtrfxcox_total[["t_ttop_y", "newosteofx", "age", "height", "weight", "osteomed", "t_ctpo_bi", 
