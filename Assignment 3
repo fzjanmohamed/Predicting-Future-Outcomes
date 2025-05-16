@@ -117,4 +117,280 @@ add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
 plt.tight_layout()
 #kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
 
+# Log-rank test for curve comparison: #
+ctpo_logrank = multivariate_logrank_test(kmpvfx['t_ttop'], kmpvfx['t_ctpo_bi'], kmpvfx['status'])
+ctpo_logrank.print_summary();
 
+#b. Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+kmpvfx1 = xtrfxcovbs1[["t_tbsp_bi", "t_ttop","status"]].dropna();
+np.isnan(kmpvfx1).value_counts();
+kmf = KaplanMeierFitter()
+t = kmpvfx1["t_ttop"]
+y = kmpvfx1["status"]
+kmf.fit(t, event_observed=y)
+kmf.plot();
+
+groups1 = kmpvfx1["t_tbsp_bi"]
+ix = (groups1 == 0)
+kmf.fit(t[~ix], y[~ix], label='Larger Trabecular Separation')
+ax = kmf.plot_survival_function()
+print(kmf_lgtbsp.predict(times= [6, 12, 18]))
+kmf.fit(t[ix], y[ix], label='Smaller Trabecular Separation')
+ax = kmf.plot_survival_function(ax=ax) # on the same axes
+print(kmf_smtbsp.predict(times= [6, 12, 18]));
+
+from lifelines.plotting import add_at_risk_counts
+
+kmf_lgtbsp = KaplanMeierFitter()
+kmf_lgtbsp.fit(t[~ix], y[~ix], label='Larger Trabecular Separation')
+ax = kmf_lgtbsp.plot_survival_function(ci_show=True)
+
+kmf_smtbsp = KaplanMeierFitter()
+kmf_smtbsp.fit(t[ix], y[ix], label='Smaller Trabecular Separation')
+ax = kmf_smtbsp.plot_survival_function(ax=ax, ci_show=True) # on the same axes
+add_at_risk_counts(kmf_lgtbsp, kmf_smtbsp, ax=ax)
+plt.tight_layout()
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+
+# Log-rank test for curve comparison: #
+tbsp_logrank = multivariate_logrank_test(kmpvfx1['t_ttop'], kmpvfx1['t_tbsp_bi'], kmpvfx1['status'])
+tbsp_logrank.print_summary();
+
+xtrfx = xtrfxcovbs1.copy()
+xtrfx;
+
+xtrfxt1 = xtrfx[(xtrfx['t_ctpo_bi'] == 1)];
+np.mean(xtrfxt1['t_ttop']);
+xtrfxt0 = xtrfx[(xtrfx['t_ctpo_bi'] == 0)];
+np.mean(xtrfxt0['t_ttop']);
+
+#3. Repeat #1 above but restricting the results to 36 months. Answer the same questions (i-iii) in parts a and b of #1.
+Part a
+a. Run a Kaplan-Meier analysis examining the relationship between t_CtPo_bi (EXPOSURE) and time to (t_ttop) new osteoporotic fractures (newosteofx) (STATUS)#
+
+xtrfxtop = xtrfx[(xtrfx['t_ttop']<= 36)]
+xtrfxtop;
+kmf = KaplanMeierFitter()
+t = xtrfxtop["t_ttop"]
+y = xtrfxtop["status"]
+kmf.fit(t, event_observed=y)
+kmf.plot();
+
+#iii.	Plot the KM curves on the same plot#
+groups = xtrfxtop["t_ctpo_bi"]
+ix = (groups == 0)
+
+kmf.fit(t[~ix], y[~ix], label='Larger Cortical Porosity')
+ax = kmf.plot_survival_function()
+print(kmf_lgcorpo.predict(times= [6, 12, 18]))
+
+kmf.fit(t[ix], y[ix], label='Smaller Cortical Porosity')
+ax = kmf.plot_survival_function(ax=ax) # on the same axes
+print(kmf_smcorpo.predict(times= [6, 12, 18]));
+
+from lifelines.plotting import add_at_risk_counts
+
+kmf_lgcorpo = KaplanMeierFitter()
+kmf_lgcorpo.fit(t[~ix], y[~ix], label='Larger Cortical Porosity')
+ax = kmf_lgcorpo.plot_survival_function(ci_show=True)
+
+kmf_smcorpo = KaplanMeierFitter()
+kmf_smcorpo.fit(t[ix], y[ix], label='Smaller Cortical Porosity')
+ax = kmf_smcorpo.plot_survival_function(ax=ax, ci_show=True) # on the same axes
+
+add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
+plt.tight_layout()
+
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+
+# ii.	Report p-value from log-ranks test – is this significant? What does that mean? #
+# Log-rank test for curve comparison: 
+ctpo_logrank = multivariate_logrank_test(xtrfxtop['t_ttop'], xtrfxtop['t_ctpo_bi'], xtrfxtop['status'])
+ctpo_logrank.print_summary();
+
+#Part b - #b.	Run a Kaplan-Meier analysis examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+kmf = KaplanMeierFitter()
+t = xtrfxtop["t_ttop"]
+y = xtrfxtop["status"]
+kmf.fit(t, event_observed=y)
+kmf.plot();
+
+#iii.	Plot the KM curves on the same plot#
+groups1 = xtrfxtop["t_tbsp_bi"]
+ix = (groups1 == 0)
+
+kmf.fit(t[~ix], y[~ix], label='Larger Trabecular Separation')
+ax = kmf.plot_survival_function()
+print(kmf_lgtbsp.predict(times= [6, 12, 18]))
+
+kmf.fit(t[ix], y[ix], label='Smaller Trabecular Separation')
+ax = kmf.plot_survival_function(ax=ax) # on the same axes
+print(kmf_smtbsp.predict(times= [6, 12, 18]));
+
+from lifelines.plotting import add_at_risk_counts
+
+kmf_lgtbsp = KaplanMeierFitter()
+kmf_lgtbsp.fit(t[~ix], y[~ix], label='Larger Trabecular Separation')
+ax = kmf_lgtbsp.plot_survival_function(ci_show=True)
+
+kmf_smtbsp = KaplanMeierFitter()
+kmf_smtbsp.fit(t[ix], y[ix], label='Smaller Trabecular Separation')
+ax = kmf_smtbsp.plot_survival_function(ax=ax, ci_show=True) # on the same axes
+
+add_at_risk_counts(kmf_lgtbsp, kmf_smtbsp, ax=ax)
+plt.tight_layout()
+
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+
+# ii.	Report p-value from log-ranks test – is this significant? What does that mean? 
+# Log-rank test for curve comparison: 
+tbsp_logrank = multivariate_logrank_test(xtrfxtop['t_ttop'], xtrfxtop['t_tbsp_bi'], xtrfxtop['status'])
+tbsp_logrank.print_summary();
+
+#PART 2A – Cox Proportional Hazards (PH) Models
+xtrfxcox1 = xtrfxcovbs.copy();
+varstokeep = ["id", "newosteofx", "age", "height", "weight", "osteomed", "t_moart", "tothip_16"]
+xtrfxcox1[varstokeep];
+
+xtrfxcox_all = xtrfxcox1.merge(xtrfx[['id','t_ctpo_bi','t_tbsp_bi']],on='id');
+xtrfxcox_total = xtrfxcox_all.merge(xtrfxcovbs[['id', 't_ttop']], on='id')
+xtrfxcox_total
+xtrfxcov1 = xtrfxcox_total[["t_ttop_y", "newosteofx", "age", "height", "weight", "osteomed", "t_ctpo_bi", 
+                            "t_tbsp_bi", "t_moart", "tothip_16"]].dropna()
+xtrfxcov1['status'] = xtrfxcov1['newosteofx']
+xtrfxcov1
+
+# 1.	How does a larger cortical porosity (t_CtPo_bi) and a larger trabecular separation  (t_TbSp_bi) relate 
+#to having new osteoporotic fractures (newosteofx) in the future, adjusting for age, height, weight and use 
+#of osteoporosis medication (osteomed)?
+
+xtrfxcox = xtrfxcovbs.iloc[:,[18, 36, 49, 50, 51, 62, 82]]
+addedcolumns = xtrfx["t_ctpo_bi"]
+xtrfxcox = xtrfxcox.join(addedcolumns)
+t_tbsp_bi_add = xtrfx["t_tbsp_bi"]
+xtrfxcox = xtrfxcox.join(t_tbsp_bi_add)
+t_ttop_add = xtrfxcovbs["t_ttop"]
+xtrfxcox = xtrfxcox.join(t_ttop_add)
+
+xtrfxcov = xtrfxcox[["t_ttop", "newosteofx", "age", "height", "weight", "osteomed", "t_ctpo_bi", "t_tbsp_bi", "t_moart", "tothip_16"]].dropna()
+xtrfxcov['status'] = xtrfxcov['newosteofx']
+
+#a.	Run a Cox PH model examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+
+cph = CoxPHFitter()
+cph.fit(xtrfxcov1, 't_ttop_y', event_col='status', formula="t_ctpo_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph.print_summary() # tie method is by default Efron approximation 
+#b.	Run a Cox PH model examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+cph1 = CoxPHFitter()
+cph1.fit(xtrfxcov1, 't_ttop_y', event_col='status', formula="t_tbsp_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph1.print_summary() # tie method is by default Efron approximation 
+#2.	Repeat question 1 above but looking only at times up to and including 36 months. 
+#(You could achieve this in many ways – subsetting the dataframe, using a conditional statement in the code, etc.) 
+#Answer the same questions (i & ii)  in parts a and b of #1
+
+xtrfxtop36 = xtrfxcov1[(xtrfxcov1['t_ttop_y']<= 36)]
+xtrfxtop36
+
+#a.	Run a Cox PH model examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+
+cph2 = CoxPHFitter()
+cph2.fit(xtrfxtop36, 't_ttop_y', event_col='status', formula="t_ctpo_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph2.print_summary() # tie method is by default Efron approximation 
+
+#b.	Run a Cox PH model examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+cph = CoxPHFitter()
+cph.fit(xtrfxtop36, 't_ttop_y', event_col='status', formula="t_tbsp_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph.print_summary() # tie method is by default Efron approximation 
+xtrfxtop36_moart = xtrfxcov1[(xtrfxcov1['t_ttop_y']<= 36) & (xtrfxcov1['t_moart']<= 3)]
+xtrfxtop36_moart
+
+#a.	Run a Cox PH model examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+
+cph3 = CoxPHFitter()
+cph3.fit(xtrfxtop36_moart, 't_ttop_y', event_col='status', formula="t_ctpo_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph3.print_summary() # tie method is by default Efron approximation 
+cph.concordance_index_
+cph1.concordance_index_
+cph2.concordance_index_
+cph2.concordance_index_
+
+#b.	Run a Cox PH model examining the relationship between t_TbSp_bi and time to (t_ttop) new osteoporotic fractures (newosteofx), 
+#adjusting for age, height, weight and osteomed
+cph4 = CoxPHFitter()
+cph4.fit(xtrfxtop36_moart, 't_ttop_y', event_col='status', formula="t_tbsp_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph4.print_summary() # tie method is by default Efron approximation 
+cph4.concordance_index_
+
+# (8	a) Now include BOTH t_CtPo_bi and t_TbSp_bi into the same model, restricting to 36 months and motion artifact <= 3,
+#and adjusting for the same covariates: age, height, weight, osteomed. 
+cph_both = CoxPHFitter()
+cph_both.fit(xtrfxtop36_moart, 't_ttop_y', event_col='status', formula=
+             "t_tbsp_bi + t_ctpo_bi + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph_both.print_summary() # tie method is by default Efron approximation 
+
+cph_dxa = CoxPHFitter()
+cph_dxa.fit(xtrfxtop36_moart, 't_ttop_y', event_col='status', formula=
+            "t_tbsp_bi + t_ctpo_bi + tothip_16 + age + height + weight + osteomed") # automatically assumes all the other variables in the df are exposure/covariates
+cph_dxa.print_summary() # tie method is by default Efron approximation 
+
+#Bonus
+np.mean(xtrfxcovbs1['t_tbsp']) + (2* np.std(xtrfxcovbs1['t_tbsp']))
+np.mean(xtrfxcovbs1['t_ctpo_ec']) + (2* np.std(xtrfxcovbs1['t_ctpo_ec']))
+pt1 = pd.DataFrame([["81","148","49","1","0","1","1.101", "0"]])
+pt1_2 = pt1.append(
+[["68","168","42","0","1","0","0.890", "0"]])
+pt1_2.columns = ["age", "height", "weight", "osteomed", "t_tbsp_bi", "t_ctpo_bi", "tothip_16", "moart"]
+pt1_2
+
+cumhaz1 = cph_dxa.predict_cumulative_hazard(pt1_2, times=[24,36]).T
+cumhaz1.columns = ["cumhaz24", "cumhaz36"]
+cumhaz1
+absfxriskpt1 = 1-np.exp(-1*cumhaz1)
+absfxriskpt1
+xtrfxcov1.describe()
+
+xtrfxcovbs["age"].describe()
+xtrfxcovbs["height"].describe()
+xtrfxcovbs["weight"].describe()
+xtrfxcovbs["t_ctpo_ec"].describe()
+xtrfxcovbs["t_tbsp"].describe()
+xtrfxcovbs["t_ttop"].describe()
+xtrfxcovbs["tothip_16"].describe()
+np.mean(xtrfxcovbs['t_ctpo_ec'])
+np.mean(xtrfxcovbs['t_tbsp'])
+np.mean(xtrfxcovbs['t_ttop'])
+np.mean(xtrfxcovbs['age'])
+np.mean(xtrfxcovbs['weight'])
+np.mean(xtrfxcovbs['height'])
+np.mean(xtrfxcovbs['tothip_16'])
+np.std(xtrfxcovbs['t_ctpo_ec'])
+np.std(xtrfxcovbs['t_tbsp'])
+np.std(xtrfxcovbs['t_ttop'])
+np.std(xtrfxcovbs['age'])
+np.std(xtrfxcovbs['weight'])
+np.std(xtrfxcovbs['height'])
+np.std(xtrfxcovbs['tothip_16'])
+min(xtrfxcovbs['t_ctpo_ec'])
+max(xtrfxcovbs['t_ctpo_ec'])
+min(xtrfxcovbs['t_tbsp'])
+max(xtrfxcovbs['t_tbsp'])
+min(xtrfxcovbs['t_ttop'])
+max(xtrfxcovbs['t_ttop'])
+min(xtrfxcovbs['age'])
+max(xtrfxcovbs['age'])
+min(xtrfxcovbs['height'])
+max(xtrfxcovbs['height'])
+min(xtrfxcovbs['weight'])
+max(xtrfxcovbs['weight'])
+min(xtrfxcovbs['tothip_16'])
+max(xtrfxcovbs['tothip_16'])
+xtrfxcovbs1['t_ctpo_bi'].value_counts()
+xtrfxcovbs1['t_tbsp_bi'].value_counts()
+xtrfxcovbs['newosteofx'].value_counts()
+xtrfxcovbs['osteomed'].value_counts()
+xtrfxcovbs['t_moart'].value_counts()
