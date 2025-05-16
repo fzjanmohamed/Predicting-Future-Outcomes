@@ -1,0 +1,120 @@
+%cd C:\\Users\\Fatima\\Documents\\Fatima\\Michener\\Digital Health and Data Analytics\\Data Analytics II;
+
+import pandas as pd;
+from datetime import datetime as dt;
+import numpy as np;
+import matplotlib.pyplot as plt;
+import seaborn as sns;
+
+import statsmodels.api as sm;
+from sklearn.linear_model import LinearRegression;
+
+# Packages for survival analysis
+from lifelines.statistics import multivariate_logrank_test;
+from lifelines import KaplanMeierFitter, CoxPHFitter;
+
+xtrfxcovbs = pd.read_sas("xtrfxcovbs_withbmd.sas7bdat", format = 'sas7bdat');
+
+xtrfxcovbs.columns = xtrfxcovbs.columns.str.lower();
+
+xtrfxcovbs.columns;
+
+pd.set_option('display.max_columns', None);
+xtrfxcovbs;
+
+#PART 1 – Understand the characteristics of the CT bone measures (5 Marks)¶
+Determine the mean and standard deviation of t_CtPo_EC and t_TbSp.#
+
+print("Mean of t_ctpo_ec =", np.mean(xtrfxcovbs['t_ctpo_ec']));
+
+print("Standard deviation of t_ctpo_ec = ", np.std(xtrfxcovbs['t_ctpo_ec']));
+print("Mean of t_tbsp =", np.mean(xtrfxcovbs['t_tbsp']));
+print("Standard deviation of t_tbsp = ", np.std(xtrfxcovbs['t_tbsp']));
+
+#2. Run a univariable linear regression between t_CtPo_EC and t_TbSp¶
+a. Report the regression coefficient, 95% CI, and R2#
+
+xtrfxcovbs1 = xtrfxcovbs[["id", "t_ctpo_ec","t_tbsp", "newosteofx", "t_ttop"]].dropna();
+pd.set_option('display.max_rows', None);
+xtrfxcovbs1;
+
+np.isnan(xtrfxcovbs1).value_counts();
+x = xtrfxcovbs1[["t_ctpo_ec"]];
+y = xtrfxcovbs1["t_tbsp"];
+x1 = sm.add_constant(x);
+x1;
+
+model = sm.OLS(y, x1);
+results = model.fit();
+print(results.summary());
+
+#3. Let’s turn t_CtPo_EC and t_TbSp into binomial / dichotomous variables to indicate if they are above or below 2 standard deviations above the mean:#
+
+# a)If t_CtPo_EC >= mean of  t_CtPo_EC + 2* standard deviation of t_CtPo_EC then t_CtPo_bi = 1; Else t_CtPo_bi = 0 #
+
+xtrfxcovbs1.loc[xtrfxcovbs1['t_ctpo_ec'] >= (np.mean(xtrfxcovbs1['t_ctpo_ec']) + (2* np.std(xtrfxcovbs1['t_ctpo_ec']))), 
+                't_ctpo_bi'] = 1
+xtrfxcovbs1.loc[xtrfxcovbs1['t_ctpo_ec'] < (np.mean(xtrfxcovbs1['t_ctpo_ec']) + (2* np.std(xtrfxcovbs1['t_ctpo_ec']))), 
+                't_ctpo_bi'] = 0;
+
+#b.	If t_TbSp >= mean of  t_TbSp + 2* standard deviation of t_TbSp then t_TbSp_bi = 1; Else t_TbSp_bi = 0 #
+
+xtrfxcovbs1.loc[xtrfxcovbs1['t_tbsp'] >= (np.mean(xtrfxcovbs1['t_tbsp']) + (2* np.std(xtrfxcovbs1['t_tbsp']))), 
+                't_tbsp_bi'] = 1
+xtrfxcovbs1.loc[xtrfxcovbs1['t_tbsp'] < (np.mean(xtrfxcovbs1['t_tbsp']) + (2* np.std(xtrfxcovbs1['t_tbsp']))), 
+                't_tbsp_bi'] = 0
+
+#1. How does a larger cortical porosity (t_CtPo_bi) and a larger trabecular separation (t_TbSp_bi) relate to having new osteoporotic fractures (newosteofx) in the future?
+a. Run a Kaplan-Meier analysis examining the relationship between t_CtPo_bi and time to (t_ttop) new osteoporotic fractures (newosteofx)#
+
+xtrfxcovbs1['status'] = xtrfxcovbs1['newosteofx'];
+kmpvfx = xtrfxcovbs1[["t_ctpo_bi", "t_ttop","status"]].dropna();
+np.isnan(kmpvfx).value_counts();
+xtrfxcovbs1['t_ttop'];
+kmf = KaplanMeierFitter();
+t = kmpvfx["t_ttop"];
+y = kmpvfx["status"];
+kmf.fit(t, event_observed=y);
+kmf.plot();
+
+groups = kmpvfx["t_ctpo_bi"]
+ix = (groups == 0)
+kmf.fit(t[~ix], y[~ix], label='Larger Cortical Porosity')
+ax = kmf.plot_survival_function()
+print(kmf_lgcorpo.predict(times= [6, 12, 18]))
+kmf.fit(t[ix], y[ix], label='Smaller Cortical Porosity')
+ax = kmf.plot_survival_function(ax=ax) # on the same axes
+print(kmf_smcorpo.predict(times= [6, 12, 18]))
+
+from lifelines.plotting import add_at_risk_counts
+
+kmf_lgcorpo = KaplanMeierFitter()
+kmf_lgcorpo.fit(t[~ix], y[~ix], label='Larger Cortical Porosity')
+ax = kmf_lgcorpo.plot_survival_function(ci_show=True)
+
+kmf_smcorpo = KaplanMeierFitter()
+kmf_smcorpo.fit(t[ix], y[ix], label='Smaller Cortical Porosity')
+ax = kmf_smcorpo.plot_survival_function(ax=ax, ci_show=True) # on the same axes
+
+add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
+plt.tight_layout()
+
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+
+from lifelines.plotting import add_at_risk_counts
+
+kmf_lgcorpo = KaplanMeierFitter()
+kmf_lgcorpo.fit(t[~ix], y[~ix], label='Larger Cortical Porosity')
+ax = kmf_lgcorpo.plot_survival_function(ci_show=True)
+print(kmf_lgcorpo.predict(times= [6, 12, 18]))
+
+kmf_smcorpo = KaplanMeierFitter()
+kmf_smcorpo.fit(t[ix], y[ix], label='Smaller Cortical Porosity')
+ax = kmf_smcorpo.plot_survival_function(ax=ax, ci_show=True) # on the same axes
+print(kmf_smcorpo.predict(times= [6, 12, 18]))
+
+add_at_risk_counts(kmf_lgcorpo, kmf_smcorpo, ax=ax)
+plt.tight_layout()
+#kmf.plot_survival_function(ci_show=True, at_risk_counts=True) # show_censors=True to display when censoring happened#
+
+
